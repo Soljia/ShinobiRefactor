@@ -34,8 +34,10 @@ module.exports = function (vars) {
         if(x){
             return x.broadcast.to(y).emit('f',z)
         };
-        if(io)
+        if(y)
             io.to(y).emit('f',z);
+        else
+            io.emit('f',z);
     }
     //send data to child node function (experimental)
     module.cx = function(z,y,x){

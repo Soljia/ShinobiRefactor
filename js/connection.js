@@ -40,7 +40,7 @@ module.exports = function(vars){
                 }
                 var tx=function(z){cn.emit('data',z);}
                 d.failed=function(msg){
-                    tx({f:'stop_reconnect',msg:msg,token_used:d.auth,ke:d.ke});
+                    misc.tx({f:'stop_reconnect',msg:msg,token_used:d.auth,ke:d.ke});
                     cn.disconnect();
                 }
                 d.success=function(r){
@@ -63,9 +63,9 @@ module.exports = function(vars){
                     cn.channel=d.channel;
                     cn.removeListenerOnDisconnect=true;
                     cn.socketVideoStream=d.id;
-                    tx({time:toUTC(),buffer:s.group[d.ke].mon[d.id].firstStreamChunk[chunkChannel]})
+                    misc.tx({time:toUTC(),buffer:s.group[d.ke].mon[d.id].firstStreamChunk[chunkChannel]})
                     Emitter.on('data',s.group[d.ke].mon[d.id].contentWriter[chunkChannel]=function(buffer){
-                        tx({time:toUTC(),buffer:buffer})
+                        misc.tx({time:toUTC(),buffer:buffer})
                     })
                  }
                 s.sqlQuery('SELECT ke,uid,auth,mail,details FROM Users WHERE ke=? AND auth=? AND uid=?',[d.ke,d.auth,d.uid],function(err,r) {
@@ -105,7 +105,7 @@ module.exports = function(vars){
                 }
                 var tx=function(z){cn.emit('data',z);}
                 d.failed=function(msg){
-                    tx({f:'stop_reconnect',msg:msg,token_used:d.auth,ke:d.ke});
+                    misc.tx({f:'stop_reconnect',msg:msg,token_used:d.auth,ke:d.ke});
                     cn.disconnect();
                 }
                 d.success=function(r){
@@ -211,16 +211,16 @@ module.exports = function(vars){
                 if(!cn.ke&&d.f==='init'){//socket login
                     cn.ip=cn.request.connection.remoteAddress;
                     tx=function(z){if(!z.ke){z.ke=cn.ke;};cn.emit('f',z);}
-                    d.failed=function(){tx({ok:false,msg:'Not Authorized',token_used:d.auth,ke:d.ke});cn.disconnect();}
+                    d.failed=function(){misc.tx({ok:false,msg:'Not Authorized',token_used:d.auth,ke:d.ke});cn.disconnect();}
                     d.success=function(r){
                         r=r[0];cn.join('GRP_'+d.ke);cn.join('CPU');
                         cn.ke=d.ke,
                         cn.uid=d.uid,
                         cn.auth=d.auth;
                         if(!s.group[d.ke])s.group[d.ke]={};
-        //                    if(!s.group[d.ke].vid)s.group[d.ke].vid={};
+                        //                    if(!s.group[d.ke].vid)s.group[d.ke].vid={};
                         if(!s.group[d.ke].users)s.group[d.ke].users={};
-        //                    s.group[d.ke].vid[cn.id]={uid:d.uid};
+                        //                    s.group[d.ke].vid[cn.id]={uid:d.uid};
                         s.group[d.ke].users[d.auth]={cnid:cn.id,uid:r.uid,mail:r.mail,details:JSON.parse(r.details),logged_in_at:moment(new Date).format(),login_type:'Dashboard'}
                         try{s.group[d.ke].users[d.auth].details=JSON.parse(r.details)}catch(er){}
                         if(s.group[d.ke].users[d.auth].details.get_server_log!=='0'){
@@ -233,15 +233,15 @@ module.exports = function(vars){
                             if(!s.group[d.ke].mon){s.group[d.ke].mon={}}
                         }
                         if(s.ocv){
-                            tx({f:'detector_plugged',plug:s.ocv.plug,notice:s.ocv.notice})
-                            misc.ocvTx({f:'readPlugins',ke:d.ke})
+                            misc.tx({f:'detector_plugged',plug:s.ocv.plug,notice:s.ocv.notice})
+                            misc.ocvmisc.tx({f:'readPlugins',ke:d.ke})
                         }
-                        tx({f:'users_online',users:s.group[d.ke].users})
+                        misc.tx({f:'users_online',users:s.group[d.ke].users})
                         misc.tx({f:'user_status_change',ke:d.ke,uid:cn.uid,status:1,user:s.group[d.ke].users[d.auth]},'GRP_'+d.ke)
                         s.init('diskUsedEmit',d)
                         s.init('apps',d)
                         s.sqlQuery('SELECT * FROM API WHERE ke=? AND uid=?',[d.ke,d.uid],function(err,rrr) {
-                            tx({
+                            misc.tx({
                                 f:'init_success',
                                 users:s.group[d.ke].vid,
                                 apis:rrr,
@@ -270,7 +270,7 @@ module.exports = function(vars){
                                     },2000)
                                 });
                             }).on('error', function(e){
-        //                              logging.systemLog("Get Snapshot Error", e);
+                    //                              logging.systemLog("Get Snapshot Error", e);
                             });
                         })
                     }
@@ -305,7 +305,7 @@ module.exports = function(vars){
                     try{
                     switch(d.f){
                         case'ocv_in':
-                            misc.ocvTx(d.data)
+                            misc.ocvmisc.tx(d.data)
                         break;
                         case'monitorOrder':
                             if(d.monitorOrder&&d.monitorOrder instanceof Array){
@@ -320,13 +320,13 @@ module.exports = function(vars){
                         break;
                         case'update':
                             if(!config.updateKey){
-                                tx({error:lang.updateKeyText1});
+                                misc.tx({error:lang.updateKeyText1});
                                 return;
                             }
                             if(d.key===config.updateKey){
                                 exec('chmod +x '+__dirname+'/UPDATE.sh&&'+__dirname+'/UPDATE.sh',{detached: true})
                             }else{
-                                tx({error:lang.updateKeyText2});
+                                misc.tx({error:lang.updateKeyText2});
                             }
                         break;
                         case'cron':
@@ -339,14 +339,14 @@ module.exports = function(vars){
                                 case'delete':
                                     d.set=[],d.ar=[];
                                     d.form.ke=cn.ke;d.form.uid=cn.uid;delete(d.form.ip);
-                                    if(!d.form.code){tx({f:'form_incomplete',form:'APIs'});return}
+                                    if(!d.form.code){misc.tx({f:'form_incomplete',form:'APIs'});return}
                                     d.for=Object.keys(d.form);
                                     d.for.forEach(function(v){
                                         d.set.push(v+'=?'),d.ar.push(d.form[v]);
                                     });
                                     s.sqlQuery('DELETE FROM API WHERE '+d.set.join(' AND '),d.ar,function(err,r){
                                         if(!err){
-                                            tx({f:'api_key_deleted',form:d.form});
+                                            misc.tx({f:'api_key_deleted',form:d.form});
                                             delete(s.api[d.form.code]);
                                         }else{
                                             logging.systemLog('API Delete Error : '+e.ke+' : '+' : '+e.mid,err)
@@ -362,7 +362,7 @@ module.exports = function(vars){
                                     });
                                     s.sqlQuery('INSERT INTO API ('+d.set.join(',')+') VALUES ('+d.qu.join(',')+')',d.ar,function(err,r){
                                         d.form.time=misc.moment(new Date,'YYYY-DD-MM HH:mm:ss');
-                                        if(!err){tx({f:'api_key_added',form:d.form});}else{logging.systemLog(err)}
+                                        if(!err){misc.tx({f:'api_key_added',form:d.form});}else{logging.systemLog(err)}
                                     });
                                 break;
                             }
@@ -385,7 +385,7 @@ module.exports = function(vars){
                                                         delete(d.d.filters[d.form.id]);
                                                     }
                                                     s.sqlQuery('UPDATE Users SET details=? WHERE ke=? AND uid=?',[JSON.stringify(d.d),d.ke,d.uid],function(err,r){
-                                                        tx({f:'filters_change',uid:d.uid,ke:d.ke,filters:d.d.filters});
+                                                        misc.tx({f:'filters_change',uid:d.uid,ke:d.ke,filters:d.d.filters});
                                                     });
                                                 }
                                             })
@@ -446,7 +446,7 @@ module.exports = function(vars){
                                                     delete(s.group[d.ke].webdav)
                                                     s.init('apps',d)
                                                 }
-                                                tx({f:'user_settings_change',uid:d.uid,ke:d.ke,form:d.form});
+                                                misc.tx({f:'user_settings_change',uid:d.uid,ke:d.ke,form:d.form});
                                             });
                                         }
                                     })
@@ -590,7 +590,7 @@ module.exports = function(vars){
                                             }
                                             getVideos(function(videos){
                                                 getEvents(function(events){
-                                                    tx({
+                                                    misc.tx({
                                                         f:'drawPowerVideoMainTimeLine',
                                                         videos:videos,
                                                         events:events
@@ -602,7 +602,7 @@ module.exports = function(vars){
                                 break;
                                 case'control':
                                     camera.camera('control',d,function(resp){
-                                        tx({f:'control',response:resp})
+                                        misc.tx({f:'control',response:resp})
                                     })
                                 break;
                                 case'jpeg_off':
@@ -613,7 +613,7 @@ module.exports = function(vars){
                                           cn.join('MON_STREAM_'+n);
                                       });
                                     }
-                                    tx({f:'mode_jpeg_off'})
+                                    misc.tx({f:'mode_jpeg_off'})
                                 break;
                                 case'jpeg_on':
                                   cn.jpeg_on=true;
@@ -623,7 +623,7 @@ module.exports = function(vars){
                                       cn.leave('MON_STREAM_'+n);
                                   });
                                     }
-                                  tx({f:'mode_jpeg_on'})
+                                    misc.tx({f:'mode_jpeg_on'})
                                 break;
                                 case'watch_on':
                                     if(!d.ke){d.ke=cn.ke}
@@ -636,7 +636,7 @@ module.exports = function(vars){
                                         cn.join('MON_STREAM_'+d.id);
                                     } if(s.group[d.ke]&&s.group[d.ke].mon&&s.group[d.ke].mon[d.id]&&s.group[d.ke].mon[d.id].watch){
         
-                                        tx({f:'monitor_watch_on',id:d.id,ke:d.ke})
+                                        misc.tx({f:'monitor_watch_on',id:d.id,ke:d.ke})
                                         misc.tx({viewers:Object.keys(s.group[d.ke].mon[d.id].watch).length,ke:d.ke,id:d.id},'MON_'+d.id)
                                    }
                                 break;
@@ -659,13 +659,13 @@ module.exports = function(vars){
                                 break;
                             }
                         break;
-        //                case'video':
-        //                    switch(d.ff){
-        //                        case'fix':
-        //                            s.video('fix',d)
-        //                        break;
-        //                    }
-        //                break;
+                //                case'video':
+                //                    switch(d.ff){
+                //                        case'fix':
+                //                            s.video('fix',d)
+                //                        break;
+                //                    }
+                //                break;
                         case'ffprobe':
                             if(s.group[cn.ke].users[cn.auth]){
                                 switch(d.ff){
@@ -677,11 +677,11 @@ module.exports = function(vars){
                                             return
                                         }
                                         s.group[cn.ke].users[cn.auth].ffprobe=1;
-                                        tx({f:'ffprobe_start'})
+                                        misc.tx({f:'ffprobe_start'})
                                         exec('ffprobe '+('-v quiet -print_format json -show_format -show_streams '+d.query),function(err,data){
-                                            tx({f:'ffprobe_data',data:data.toString('utf8')})
+                                            misc.tx({f:'ffprobe_data',data:data.toString('utf8')})
                                             delete(s.group[cn.ke].users[cn.auth].ffprobe)
-                                            tx({f:'ffprobe_stop'})
+                                            misc.tx({f:'ffprobe_stop'})
                                         })
                                         //auto kill in 30 seconds
                                         setTimeout(function(){
@@ -773,24 +773,24 @@ module.exports = function(vars){
                                                         protocol: 'RTSP'
                                                     },function(er, stream, xml) {
                                                         if (!er) data.url = stream;
-                                                        tx(data)
+                                                        misc.tx(data)
                                                     });
                                                 }catch(err){
-                                                    tx(data);
+                                                    misc.tx(data);
                                                 }
                                            });
                                         });
                                     });
                                 }); // foreach
                             }); // foreach
-        //                    tx({f:'onvif_end'})
+                //                    misc.tx({f:'onvif_end'})
                         break;
                     }
                 }catch(er){
                     logging.systemLog('ERROR CATCH 1',er)
                 }
                 }else{
-                    tx({ok:false,msg:lang.NotAuthorizedText1});
+                    misc.tx({ok:false,msg:lang.NotAuthorizedText1});
                 }
             });
             //functions for retrieving cron announcements
@@ -1055,7 +1055,7 @@ module.exports = function(vars){
                         if(!s.child_nodes[cn.ip]){s.child_nodes[cn.ip]=d.u;};
                         s.child_nodes[cn.ip].cnid=cn.id;
                         s.child_nodes[cn.ip].cpu=0;
-                        tx({f:'init_success',child_nodes:s.child_nodes});
+                        misc.tx({f:'init_success',child_nodes:s.child_nodes});
                     }else{
                         if(d.f!=='s.tx'){logging.systemLog('CRON',d)};
                         switch(d.f){
@@ -1084,7 +1084,7 @@ module.exports = function(vars){
                                     if (err) {
                                         return console.error('created_file'+d.d.mid,err);
                                     }
-                                   tx({f:'delete_file',file:d.filename,ke:d.d.ke,mid:d.d.mid}); misc.tx({f:'video_build_success',filename:s.group[d.d.ke].mon[d.d.mid].open+'.'+s.group[d.d.ke].mon[d.d.mid].open_ext,mid:d.d.mid,ke:d.d.ke,time:misc.nameToTime(s.group[d.d.ke].mon[d.d.mid].open),end:misc.moment(new Date,'YYYY-MM-DD HH:mm:ss')},'GRP_'+d.d.ke);
+                                   misc.tx({f:'delete_file',file:d.filename,ke:d.d.ke,mid:d.d.mid}); misc.tx({f:'video_build_success',filename:s.group[d.d.ke].mon[d.d.mid].open+'.'+s.group[d.d.ke].mon[d.d.mid].open_ext,mid:d.d.mid,ke:d.d.ke,time:misc.nameToTime(s.group[d.d.ke].mon[d.d.mid].open),end:misc.moment(new Date,'YYYY-MM-DD HH:mm:ss')},'GRP_'+d.d.ke);
                                 });
                             break;
                         }
@@ -1113,7 +1113,7 @@ module.exports = function(vars){
                             cn.join('STR_'+d.ke);
                             if(s.group[d.ke]&&s.group[d.ke].mon[d.id]&&s.group[d.ke].mon[d.id].watch){
         
-                                tx({f:'monitor_watch_on',id:d.id,ke:d.ke},'MON_'+d.id)
+                                misc.tx({f:'monitor_watch_on',id:d.id,ke:d.ke},'MON_'+d.id)
                                 misc.tx({viewers:Object.keys(s.group[d.ke].mon[d.id].watch).length,ke:d.ke,id:d.id},'MON_'+d.id)
                            }
                         });

@@ -7,7 +7,7 @@ var Mp4Frag = require('mp4frag');
 var P2P = require('pipe2pam');
 var moment = require('moment');
 
-module.exports = function(s,config,ffmpeg,logging,lang,misc){
+module.exports = function(s,config,ffmpeg,logging,lang,misc,nodemailer){
     let module = {};
     
     module.camera=function(x,e,cn){
@@ -179,7 +179,9 @@ module.exports = function(s,config,ffmpeg,logging,lang,misc){
     //            }
             break;
             case'watch_off'://live streamers - leave
-            if(cn.monitor_watching){delete(cn.monitor_watching[e.id])}
+            if(cn.monitor_watching){
+                delete(cn.monitor_watching[e.id])
+            }
                 if(s.group[e.ke].mon[e.id]&&s.group[e.ke].mon[e.id].watch){
                     delete(s.group[e.ke].mon[e.id].watch[cn.id]),e.ob=Object.keys(s.group[e.ke].mon[e.id].watch).length
                     if(e.ob===0){

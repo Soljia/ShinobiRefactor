@@ -104,7 +104,7 @@ s.__basedir = __dirname;
 var misc = require('./js/misc')({s:s,config:config,io:io});
 var ffmpeg = require('./js/ffmpeg')(s,config,misc);
 var logging = require('./js/logging')(s,config,misc);
-var camera = require('./js/camera')(s,config,ffmpeg,logging,lang,misc);
+var camera = require('./js/camera')(s,config,ffmpeg,logging,lang,misc,nodemailer);
 var connection = require('./js/connection')({s,config,logging,misc,camera,lang});
 var screen = require('./js/screen')(s,config,misc,logging);
 //load languages dynamically
