@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var appHTTPS = express();
 var fs = require('fs');
+var bodyParser = require('body-parser');
 
 module.exports = function(s,config,logging,location){
     let module = {};
