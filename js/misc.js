@@ -1,6 +1,5 @@
 var moment = require('moment');
 var crypto = require('crypto');
-var bodyParser = require('body-parser');
 
 module.exports = function (vars) {
     let s = vars ? vars['s'] : null

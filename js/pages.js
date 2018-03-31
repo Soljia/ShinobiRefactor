@@ -1,13 +1,44 @@
 var express = require('express');
 var app = express();
 var appHTTPS = express();
+var http = require('http');
+var https = require('https');
 var fs = require('fs');
 var bodyParser = require('body-parser');
+var server = http.createServer(app);
+var CircularJSON = require('circular-json');
 
-module.exports = function(s,config,logging,location){
+module.exports = function(s,config,logging,location,screen,io,lang){
     let module = {};
     
-        module.init = function(){
+    //SSL options
+    if(config.ssl&&config.ssl.key&&config.ssl.cert){
+        config.ssl.key=fs.readFileSync(misc.checkRelativePath(config.ssl.key),'utf8')
+        config.ssl.cert=fs.readFileSync(misc.checkRelativePath(config.ssl.cert),'utf8')
+        if(config.ssl.port===undefined){
+            config.ssl.port=443
+        }
+        if(config.ssl.bindip===undefined){
+            config.ssl.bindip=config.bindip
+        }
+        if(config.ssl.ca&&config.ssl.ca instanceof Array){
+            config.ssl.ca.forEach(function(v,n){
+                config.ssl.ca[n]=fs.readFileSync(misc.checkRelativePath(v),'utf8')
+            })
+        }
+        var serverHTTPS = https.createServer(config.ssl,app);
+        serverHTTPS.listen(config.ssl.port,config.bindip,function(){
+            console.log('SSL '+lang.Shinobi+' - SSL PORT : '+config.ssl.port);
+        });
+        io.attach(serverHTTPS);
+    }
+    //start HTTP
+    server.listen(config.port,config.bindip,function(){
+        console.log(lang.Shinobi+' - PORT : '+config.port);
+    });
+    io.attach(server);
+
+    module.init = function(){
         app.enable('trust proxy');
         app.use('/libs',express.static(location.basedir + '/web/libs'));
         app.use(bodyParser.json());
@@ -122,13 +153,6 @@ module.exports = function(s,config,logging,location){
                 })
             },res,req);
         })
-        //login function
-        s.deleteFactorAuth=function(r){
-            delete(s.factorAuth[r.ke][r.uid])
-            if(Object.keys(s.factorAuth[r.ke]).length===0){
-                delete(s.factorAuth[r.ke])
-            }
-        }
         app.post(['/','/:screen'],function (req,res){screen.init(req,res)});
         // Get MPEG-DASH stream (mpd)
         app.get('/:auth/mpd/:ke/:id/:file', function (req,res){

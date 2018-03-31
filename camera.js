@@ -26,13 +26,13 @@ var path = require('path');
 var mysql = require('mysql');
 var moment = require('moment');
 var request = require("request");
-var express = require('express');
-var app = express();
+//var express = require('express');
+/*var app = express();
 var appHTTPS = express();
 var http = require('http');
 var https = require('https');
 var server = http.createServer(app);
-var bodyParser = require('body-parser');
+var bodyParser = require('body-parser');*/
 var CircularJSON = require('circular-json');
 var ejs = require('ejs');
 var io = new (require('socket.io'))();
@@ -108,7 +108,7 @@ var logging = require('./js/logging')(s,config,misc);
 var camera = require('./js/camera')(s,config,ffmpeg,logging,lang,misc,nodemailer);
 var connection = require('./js/connection')({s,config,logging,misc,camera,lang});
 var screen = require('./js/screen')(s,config,misc,logging);
-var pages = require('./js/pages')(s,config,logging,location)
+var pages = require('./js/pages')(s,config,logging,location,screen,io,lang)
 //load languages dynamically
 s.loadedLanguages={}
 s.loadedLanguages[config.language]=lang;
@@ -208,32 +208,7 @@ process.on('SIGINT',ffmpeg.kill.bind(null, {exit:true}));
 s.child_nodes={};
 s.child_key='3123asdasdf1dtj1hjk23sdfaasd12asdasddfdbtnkkfgvesra3asdsd3123afdsfqw345';
 
-//SSL options
-if(config.ssl&&config.ssl.key&&config.ssl.cert){
-    config.ssl.key=fs.readFileSync(misc.checkRelativePath(config.ssl.key),'utf8')
-    config.ssl.cert=fs.readFileSync(misc.checkRelativePath(config.ssl.cert),'utf8')
-    if(config.ssl.port===undefined){
-        config.ssl.port=443
-    }
-    if(config.ssl.bindip===undefined){
-        config.ssl.bindip=config.bindip
-    }
-    if(config.ssl.ca&&config.ssl.ca instanceof Array){
-        config.ssl.ca.forEach(function(v,n){
-            config.ssl.ca[n]=fs.readFileSync(misc.checkRelativePath(v),'utf8')
-        })
-    }
-    var serverHTTPS = https.createServer(config.ssl,app);
-    serverHTTPS.listen(config.ssl.port,config.bindip,function(){
-        console.log('SSL '+lang.Shinobi+' - SSL PORT : '+config.ssl.port);
-    });
-    io.attach(serverHTTPS);
-}
-//start HTTP
-server.listen(config.port,config.bindip,function(){
-    console.log(lang.Shinobi+' - PORT : '+config.port);
-});
-io.attach(server);
+
 console.log('NODE.JS version : '+execSync("node -v"))
 //ffmpeg location
 if(!config.ffmpegDir){
